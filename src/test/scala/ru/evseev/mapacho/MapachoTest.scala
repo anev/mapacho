@@ -1,7 +1,7 @@
-package ru.litota
+package ru.evseev.mapacho
 
 import org.scalatest._
-import ru.litota.Mapacho._
+import ru.evseev.mapacho.Mapacho._
 import org.scalatest.matchers.{MatchResult, Matcher}
 
 /**
@@ -13,17 +13,37 @@ import org.scalatest.matchers.{MatchResult, Matcher}
  */
 class MapachoTest extends FlatSpec with Matchers {
 
+  "GET requests" should "be easy" in {
 
-  "POST requests" should "be easy" in {
-
-    "https://account.bkfonbet.com/api/ps/list" body("{}") POST {
+    "http://headers.jsontest.com/" GET {
       resp: Resp =>
 
         resp.httpCode should be(200)
-
-        resp.body should include("result")
+        resp.body should include("headers.jsontest.com")
+        resp.body should include("Dispatch/0.11.1-SNAPSHOT")
     }
+  }
 
+  "GET requests with custom headers" should "be easy" in {
+
+    "http://headers.jsontest.com/" header("h1", "v1") GET {
+      resp: Resp =>
+
+        resp.httpCode should be(200)
+        resp.body should include("headers.jsontest.com")
+        resp.body should include("\"h1\": \"v1\",")
+    }
+  }
+
+  "POST requests with custom headers" should "be easy" in {
+
+    "http://headers.jsontest.com/" h("qwe", "asd") POST {
+      resp: Resp =>
+
+        resp.httpCode should be(200)
+        resp.body should include("headers.jsontest.com")
+        resp.body should include("\"qwe\": \"asd\"")
+    }
   }
 
 }

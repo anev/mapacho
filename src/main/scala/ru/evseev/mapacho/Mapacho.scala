@@ -1,7 +1,7 @@
-package ru.litota
+package ru.evseev.mapacho
 
-import dispatch._
 import com.ning.http.client.Response
+import dispatch.{url, Http, Future}
 import scala.collection.JavaConversions._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Await
@@ -17,17 +17,28 @@ import scala.concurrent.duration._
 object Mapacho {
 
 
-  implicit class MapachoMeStr(x: String) {
-    def param(k: String, v: String): Req = Req(url = x, entries = Seq(Param(k, v)))
-
-    def body(b: String): Req = Req(url = x, entries = Seq(StringBody(b)))
-  }
-
-  implicit class MapachoMeReq(req: Req) {
+  trait ReqOperations {
 
     private def makeRequest(f: Resp => Unit, method: String) {
 
-      val fut: Future[Response] = Http(url(req.url).setContentType("application/json", "utf-8").setMethod(method))
+      val fut: Future[Response] = {
+
+        var u = dispatch.url(getReq.url).setContentType("application/json", "utf-8").setMethod(method)
+
+        if (method.eq("POST")) {
+          u = u.addHeader("Content-length", "0")
+        }
+
+        for (r: ReqEntry <- getReq.entries) {
+          u = r match {
+            case sb: StringBody => u.setBody(sb.value).addHeader("Content-length", String.valueOf(sb.value.length))
+            case p: Param => u.addParameter(p.k, p.v)
+            case h: Header => u.addHeader(h.k, h.v)
+          }
+        }
+
+        Http(u)
+      }
 
       val r = Await.result(fut, 5000 millis);
 
@@ -44,9 +55,27 @@ object Mapacho {
 
     def POST(f: Resp => Unit): Unit = makeRequest(f, "POST")
 
-    def param(k: String, v: String): Req = req.copy(entries = req.entries :+ Param(k, v))
+    def param(k: String, v: String): Req = getReq.copy(entries = getReq.entries :+ Param(k, v))
 
-    def body(b: String): Req = req.copy(entries = req.entries :+ StringBody(b))
+    def p(k: String, v: String) = param(k, v)
+
+    def header(k: String, v: String): Req = getReq.copy(entries = getReq.entries :+ Header(k, v))
+
+    def h(k: String, v: String) = header(k, v)
+
+    def body(b: String): Req = getReq.copy(entries = getReq.entries :+ StringBody(b))
+
+    def getReq: Req
+  }
+
+  implicit class MapachoMeStr(x: String) extends ReqOperations {
+
+    override def getReq = Req(url = x)
+  }
+
+  implicit class MapachoMeReq(req: Req) extends ReqOperations {
+
+    override def getReq = req
   }
 
 }
@@ -57,7 +86,7 @@ case class Resp(httpCode: Int, headers: Map[String, String], body: String) {
 
 }
 
-trait ReqEntry
+sealed trait ReqEntry
 
 trait Body extends ReqEntry
 
@@ -65,4 +94,4 @@ case class StringBody(value: String) extends Body
 
 case class Param(k: String, v: String) extends ReqEntry
 
-case class Header(n: String, v: String) extends ReqEntry
+case class Header(k: String, v: String) extends ReqEntry
