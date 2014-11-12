@@ -11,7 +11,8 @@ resolvers += "Typesafe Repo" at "http://repo.typesafe.com/typesafe/releases/"
 libraryDependencies ++= Seq(
     "net.databinder.dispatch" %% "dispatch-core" % "0.11.2",
     "org.scalatest"   %% "scalatest"    % "2.2.1",
-    "org.scalacheck"  %% "scalacheck"   % "1.11.5"
+    "org.scalacheck"  %% "scalacheck"   % "1.11.5",
+    "com.typesafe.play" %% "play-json" % "2.3.6"
 )
 
 scalacOptions ++= List("-feature","-deprecation", "-unchecked", "-Xlint")

@@ -6,6 +6,7 @@ import scala.collection.JavaConversions._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Await
 import scala.concurrent.duration._
+import play.api.libs.json._
 
 /**
  * Created with IntelliJ IDEA.
@@ -36,7 +37,6 @@ object Mapacho {
             case h: Header => u.addHeader(h.k, h.v)
           }
         }
-
         Http(u)
       }
 
@@ -83,7 +83,7 @@ object Mapacho {
 case class Req(url: String, entries: Seq[ReqEntry] = Seq.empty)
 
 case class Resp(httpCode: Int, headers: Map[String, String], body: String) {
-
+  def json: JsValue = Json.parse(body)
 }
 
 sealed trait ReqEntry

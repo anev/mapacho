@@ -1,6 +1,7 @@
 package ru.evseev.mapacho
 
 import org.scalatest._
+import play.api.libs.json.JsString
 import ru.evseev.mapacho.Mapacho._
 import org.scalatest.matchers.{MatchResult, Matcher}
 
@@ -16,11 +17,12 @@ class MapachoTest extends FlatSpec with Matchers {
   "GET requests" should "be easy" in {
 
     "http://headers.jsontest.com/" GET {
-      resp: Resp =>
+      r: Resp =>
+        r.httpCode should be(200)
+        r.body should include("headers.jsontest.com")
+        r.body should include("Dispatch/0.11.1-SNAPSHOT")
 
-        resp.httpCode should be(200)
-        resp.body should include("headers.jsontest.com")
-        resp.body should include("Dispatch/0.11.1-SNAPSHOT")
+
     }
   }
 
@@ -43,6 +45,8 @@ class MapachoTest extends FlatSpec with Matchers {
         resp.httpCode should be(200)
         resp.body should include("headers.jsontest.com")
         resp.body should include("\"qwe\": \"asd\"")
+        resp.json \ "qwe" should be(JsString("asd"))
+        resp.headers("Content-Type") should be("application/json; charset=ISO-8859-1")
     }
   }
 
